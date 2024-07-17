@@ -1,8 +1,8 @@
 # ---------- File Details ---------------------------------------------------------------------------------------------
 # Name: main.py
-# Version: 0.1.1
+# Version: 0.1.2
 # Date Created:  15.07.2024 - 02:05
-# Last Modified: 17.07.2024 - 21:05
+# Last Modified: 17.07.2024 - 21:43
 # ---------------------------------------------------------------------------------------------------------------------
 
 
@@ -59,41 +59,50 @@ def welcome_message():
     print("Welcome to The Think Tank!")
     input("\nAre you ready to enter?: ")
 
-# [FUNCTION] - Return the User's Choice of Subject
+# [FUNCTION] - Return the User's Choice of Subjects
 def subject_select():
-    print("Please Choose 1 of 3 Subjects")
+    print("Please Choose Subjects (e.g. 1, 3, 4):")
 
     list_values(sql_fetch("SELECT name FROM subjects"))
 
-    choice = input("Select The Number of your Choice: ")
+    choices = input("Select The Numbers of your Choices: ").split(", ")
+    subjects = []
 
-    cursor.execute(f"SELECT name FROM subjects WHERE id = {choice}")
-    subject = cursor.fetchall()[0][0]
+    for choice in choices:
+        cursor.execute(f"SELECT name FROM subjects WHERE id = {choice}")
+        subject = cursor.fetchall()[0][0]
+        subjects.append(subject)
 
-    return subject
+    return subjects
 
-# [FUNCTION] - Return the User's Choice of Topic
-def topic_select(subject):
-    print("Please Choose a Topic")
+# [FUNCTION] - Return the User's Choice of Topics
+def topic_select(subjects):
+    topics = []
 
-    list_values(sql_fetch(f"SELECT name FROM topics WHERE subject = '{subject}'"))
+    for subject in subjects:
+        print(f"Please Choose Topics for Subject: {subject} (e.g. 1, 3, 4):")
 
-    choice = input("Select The Number of your Choice: ")
+        list_values(sql_fetch(f"SELECT name FROM topics WHERE subject = '{subject}'"))
 
-    cursor.execute(f"SELECT name FROM topics WHERE id = {choice}")
-    topic = cursor.fetchall()[0][0]
+        choices = input("Select The Numbers of your Choices: ").split(", ")
 
-    return topic
+        for choice in choices:
+            cursor.execute(f"SELECT name FROM topics WHERE id = {choice}")
+            topic = cursor.fetchall()[0][0]
+            topics.append(topic)
 
-# [FUNCTION] - Load questions based on the user's choice
-def load_questions(topic):
+    return topics
+
+# [FUNCTION] - Load questions based on the user's choices
+def load_questions(topics):
 
     fetched_options = []
     selected_options = []
     questions = []
 
-    fetched_options.extend(sql_fetch(f"SELECT type FROM questions WHERE topic = '{topic}'"))
-    
+    for topic in topics:
+        fetched_options.extend(sql_fetch(f"SELECT type FROM questions WHERE topic = '{topic}'"))
+
     all_options = remove_duplicates(extract_first_elements(fetched_options))
 
     print("Types of Questions:")
@@ -105,8 +114,9 @@ def load_questions(topic):
     for i in choices:
         selected_options.append(all_options[int(i) - 1])
 
-    for option in selected_options:
-        questions.extend(sql_fetch(f"SELECT * FROM questions WHERE topic = '{topic}' AND type = '{option}'"))
+    for topic in topics:
+        for option in selected_options:
+            questions.extend(sql_fetch(f"SELECT * FROM questions WHERE topic = '{topic}' AND type = '{option}'"))
 
     return questions
 
@@ -219,8 +229,8 @@ def ask_questions(questions):
                 print("\nHere are your mistakes:")
                 for i in mistakes:
                     mistake = sql_fetch(f'SELECT "correct_answer(s)" FROM questions WHERE id = {i[1]}')
-                    
-                    print(f"Question {i[0]}: you entered {i[2]}, but the correct answer was {mistake[0][0]}")
+
+                    print(f"Question {i[0]}: you entered {i[2]}, but the correct answer was '{mistake[0][0]}'")
 
         terminal_divide()
         print(f"GAME OVER!! You Scored: {score}/{count}")
@@ -239,13 +249,13 @@ def ask_questions(questions):
 welcome_message()
 
 terminal_divide()
-subject = subject_select()
+subjects = subject_select()
 
 terminal_divide()
-topic = topic_select(subject)
+topics = topic_select(subjects)
 
 terminal_divide()
-questions = load_questions(topic)
+questions = load_questions(topics)
 
 ask_questions(questions)
 
