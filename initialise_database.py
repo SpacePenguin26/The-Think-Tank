@@ -1,10 +1,9 @@
 # ---------- File Details --------------------------------------------------------------
 # Name: initialise_database.py
-# Version: 0.0.7
+# Version: 0.2.2
 # Date Created:  14.07.2024 - 23:13
 # Last Modified: 16.07.2024 - 01:27
 # --------------------------------------------------------------------------------------
-
 
 # [PREREQUISITES] - Modules and Configuration ------------------------------------------
 import sqlite3  # Import the Module 'sqlite3'
@@ -15,15 +14,36 @@ cursor = conn.cursor()  # Define Variable 'cursor'
 
 # --------------------------------------------------------------------------------------
 
+# Set-up Users Table -------------------------------------------------------------------
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+)
+''')
+# --------------------------------------------------------------------------------------
+
+# Set-up Leaderboard Table -------------------------------------------------------------
+
+# Create 'leaderboard' table if it doesn't exist
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS leaderboard (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        score INTEGER NOT NULL,
+        questions_answered INTEGER NOT NULL,
+        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+''')
 
 # Set-up Subjects Table ----------------------------------------------------------------
 
 # Create 'subjects' table if it doesn't exist
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS subjects (
-        id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        PRIMARY KEY (name)
+        id INTEGER PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL
     )
 ''')
 
@@ -36,7 +56,7 @@ subjects = [
 
 # Insert data into the table
 cursor.executemany('''
-    INSERT INTO subjects
+    INSERT OR IGNORE INTO subjects
     (id, name)
     VALUES (?, ?)
 ''', subjects)
@@ -49,10 +69,9 @@ cursor.executemany('''
 # Create 'topics' table if it doesn't exist
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS topics (
-        id INTEGER NOT NULL,
+        id INTEGER PRIMARY KEY,
         subject TEXT NOT NULL,
-        name TEXT NOT NULL,
-        PRIMARY KEY (name),
+        name TEXT UNIQUE NOT NULL,
         FOREIGN KEY (subject) REFERENCES subjects(name)
     )
 ''')
@@ -70,7 +89,7 @@ topics = [
 
 # Insert data into the table
 cursor.executemany('''
-    INSERT INTO topics
+    INSERT OR IGNORE INTO topics
     (id, subject, name)
     VALUES (?, ?, ?)
 ''', topics)
@@ -83,7 +102,7 @@ cursor.executemany('''
 # Create 'questions' table if it doesn't exist
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS questions (
-        id INTEGER NOT NULL,
+        id INTEGER PRIMARY KEY,
         subject TEXT NOT NULL,
         topic TEXT NOT NULL,
         type TEXT NOT NULL,
@@ -121,7 +140,7 @@ questions = [
 
 # Insert data into the table
 cursor.executemany('''
-    INSERT INTO questions
+    INSERT OR IGNORE INTO questions
     (id, subject, topic, type, question, answers, answer_a, answer_b, answer_c, answer_d, "correct_answer(s)")
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ''', questions)
